@@ -1,1 +1,2 @@
 pip install pyarabic
+check this when free: http://tahadz.com/
