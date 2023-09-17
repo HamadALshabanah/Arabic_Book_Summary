@@ -1,7 +1,7 @@
 import re
 import PyPDF2
 import pandas as pd
-
+import os
 
 with open('ar_SA.txt', 'r', encoding='utf-8') as file:
     arabic_dictionary = file.read()
@@ -64,43 +64,41 @@ def is_gibberish(text, dictionary, threshold=.30):
     return proportion_not_in_dictionary > threshold
 
   
-def process_text(sample_text, dictionary):
-    fixed_text = fix_arabic_text(sample_text)
-    
-    
-    gibberish = is_gibberish(fixed_text, dictionary)
-    
-    return gibberish
+
    
 
 
 
-pdfFileObj = open('442812947@kku.edu_.sa_.pdf', 'rb')
+def read_multiple_pdfs(directory):
+    pdf_texts = {}
+    for filename in os.listdir(directory):
+        if filename.endswith('.pdf'):
+            pdf_path = os.path.join(directory, filename)
+            pdf_file = open(pdf_path, 'rb')
+            pdf_reader = PyPDF2.PdfFileReader(pdf_file)
+            text = ''
+            for page_num in range(pdf_reader.numPages):
+                page = pdf_reader.getPage(page_num)
+                text += page.extract_text()
+            pdf_texts[filename] = text
+            pdf_file.close()
+            yield filename, text
 
-pdfReader = PyPDF2.PdfReader(pdfFileObj)
 
-num_pages = len(pdfReader.pages)
+def arabic_text_pipline(directory, dictionary):
+    for filename, txt in read_multiple_pdfs(directory):
 
-
-for page_num in range(num_pages):
-    # Get a PageObject
-    pageObj = pdfReader.pages[page_num]
-
-    # Extract text from the PageObject
-    text_content = pageObj.extract_text()
-
-    # Process the text
-    process_text(text_content, arabic_dictionary)
-
+        fixed_text = fix_arabic_text(txt)
+        gibberish = is_gibberish(fixed_text, dictionary)
+    
+    return gibberish
 
 def is_valid(gibberish):
-    # if it's valid then create 
-    # new dataframe with the valid ones
+    # if it's valid create 
+    # new csv file with the valid ones
     pass
 
+arabic_text_pipline(read_multiple_pdfs('arabic_papers'), arabic_dictionary)
 
-# Close the PDF file
-
-pdfFileObj.close()
 
 
