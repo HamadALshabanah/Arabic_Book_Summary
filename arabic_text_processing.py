@@ -15,6 +15,7 @@ def keep_only_arabic(text):
 
 # يعدل مشكلة تقاطع الحروف الناتجة من ملفات البيدي اف
 def fix_arabic_text(text):
+    text = keep_only_arabic(text)
     # Remove extra spaces
     text = re.sub(' +', ' ', text).strip()
     
@@ -65,40 +66,43 @@ def is_gibberish(text, dictionary, threshold=.30):
 
   
 
-   
-
-
-
 def read_multiple_pdfs(directory):
     pdf_texts = {}
     for filename in os.listdir(directory):
+        print(f'working on file {filename} ......')
         if filename.endswith('.pdf'):
             pdf_path = os.path.join(directory, filename)
             pdf_file = open(pdf_path, 'rb')
-            pdf_reader = PyPDF2.PdfFileReader(pdf_file)
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
             text = ''
-            for page_num in range(pdf_reader.numPages):
-                page = pdf_reader.getPage(page_num)
+            for page_num in range(len(pdf_reader.pages)):
+                page = pdf_reader.pages[page_num]
                 text += page.extract_text()
             pdf_texts[filename] = text
             pdf_file.close()
             yield filename, text
 
 
-def arabic_text_pipline(directory, dictionary):
+def arabic_text_pipeline(directory, dictionary):
+    df_dict = []
     for filename, txt in read_multiple_pdfs(directory):
-
         fixed_text = fix_arabic_text(txt)
         gibberish = is_gibberish(fixed_text, dictionary)
-    
-    return gibberish
+        df_dict.append({'filename': filename, 'text': fixed_text, 'is_gibberish': gibberish})
+        
+    df = pd.DataFrame(df_dict)
+    return df
 
-def is_valid(gibberish):
-    # if it's valid create 
-    # new csv file with the valid ones
-    pass
 
-arabic_text_pipline(read_multiple_pdfs('arabic_papers'), arabic_dictionary)
+# def is_valid(gibberish):
+#     # if it's valid create 
+#     # new csv file with the valid ones
+#     pass
+
+df = arabic_text_pipeline('arabic_papers', arabic_dictionary)
+
+df.to_csv('arabic_text_data.csv', index=False, encoding='utf-8')
+
 
 
 
