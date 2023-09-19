@@ -36,7 +36,7 @@ def fix_arabic_text(text):
         fixed_words.append(fixed_word)
     
     fixed_text = ' '.join(fixed_words)
-    
+
     return fixed_text.strip()
 
 
@@ -66,21 +66,26 @@ def is_gibberish(text, dictionary, threshold=.30):
 
   
 
+
+            
 def read_multiple_pdfs(directory):
-    pdf_texts = {}
     for filename in os.listdir(directory):
-        print(f'working on file {filename} ......')
+        print(f'working on file {filename}....')
         if filename.endswith('.pdf'):
             pdf_path = os.path.join(directory, filename)
-            pdf_file = open(pdf_path, 'rb')
-            pdf_reader = PyPDF2.PdfReader(pdf_file)
-            text = ''
-            for page_num in range(len(pdf_reader.pages)):
-                page = pdf_reader.pages[page_num]
-                text += page.extract_text()
-            pdf_texts[filename] = text
-            pdf_file.close()
-            yield filename, text
+            try:
+                pdf_file = open(pdf_path, 'rb')
+                pdf_reader = PyPDF2.PdfReader(pdf_file)
+                text = ''
+                for page_num in range(len(pdf_reader.pages)):
+                    page = pdf_reader.pages[page_num]
+                    text += page.extract_text()
+                yield filename, text
+                pdf_file.close()
+            except Exception as e:
+                print(f"Could not read {filename} due to {e}")
+                continue  # Skip this file and continue with the next one
+
 
 
 def arabic_text_pipeline(directory, dictionary):
